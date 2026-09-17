@@ -3,11 +3,13 @@ import logging
 logger = logging.getLogger("extractors.registry")
 
 # --- Moduli Esterni ---
+
 (
     VavooExtractor,
     VixSrcExtractor,
     SportsonlineExtractor,
 ) = None, None, None
+
 (
     MixdropExtractor,
     VoeExtractor,
@@ -16,6 +18,7 @@ logger = logging.getLogger("extractors.registry")
     FreeshotExtractor,
 ) = None, None, None, None, None
 # New extractors
+
 (
     DoodStreamExtractor,
     FastreamExtractor,
@@ -23,6 +26,7 @@ logger = logging.getLogger("extractors.registry")
     FileMoonExtractor,
     LuluStreamExtractor,
 ) = None, None, None, None, None
+
 (
     OkruExtractor,
     StreamWishExtractor,
@@ -30,6 +34,7 @@ logger = logging.getLogger("extractors.registry")
     UqloadExtractor,
     DroploadExtractor,
 ) = None, None, None, None, None
+
 (
     VidmolyExtractor,
     VidozaExtractor,
@@ -39,6 +44,7 @@ logger = logging.getLogger("extractors.registry")
     Sports99Extractor,
 ) = None, None, None, None, None, None
 DLStreamsExtractor = None
+IcelandersExtractor = None
 StreamHGExtractor = None
 VidXgoExtractor = None
 EmbedStExtractor = None
@@ -50,7 +56,6 @@ WittyTVExtractor = None
 RaiPlayExtractor = None
 ADSExtractor = None
 CinejoyExtractor = None
-
 
 # Importazione condizionale degli estrattori
 try:
@@ -64,7 +69,6 @@ try:
     logger.info("✅ VavooExtractor module loaded.")
 except ImportError:
     logger.warning("⚠️ VavooExtractor module not found. Vavoo functionality disabled.")
-
 
 try:
     from extractors.vixsrc import VixSrcExtractor
@@ -131,8 +135,6 @@ try:
     logger.info("✅ LuluStreamExtractor module loaded.")
 except ImportError:
     logger.warning("⚠️ LuluStreamExtractor module not found.")
-
-
 
 try:
     from extractors.okru import OkruExtractor
@@ -220,6 +222,13 @@ except Exception as e:
     DLStreamsExtractor = None
 
 try:
+    from extractors.icelanders import IcelandersExtractor
+    logger.info("✅ IcelandersExtractor module loaded.")
+except Exception as e:
+    logger.warning("⚠️ IcelandersExtractor failed to load: %s", e)
+    IcelandersExtractor = None
+
+try:
     from extractors.embedst import EmbedStExtractor
     logger.info("✅ EmbedStExtractor module loaded.")
 except Exception as e:
@@ -276,7 +285,6 @@ except Exception as e:
     logger.warning("⚠️ CinejoyExtractor failed to load: %s", e)
     CinejoyExtractor = None
 
-
 __all__ = [
     "VavooExtractor",
     "VixSrcExtractor",
@@ -303,6 +311,7 @@ __all__ = [
     "F16PxExtractor",
     "Sports99Extractor",
     "DLStreamsExtractor",
+    "IcelandersExtractor",
     "StreamHGExtractor",
     "VidXgoExtractor",
     "EmbedStExtractor",
