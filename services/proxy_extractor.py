@@ -129,6 +129,7 @@ class HLSProxyExtractorHandlerMixin:
                         "filemoon",
                         "lulustream",
                         "okru",
+                        "icelanders",
                         "streamwish",
                         "streamhg",
                         "supervideo",
