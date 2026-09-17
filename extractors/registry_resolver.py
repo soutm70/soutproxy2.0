@@ -21,6 +21,12 @@ _SPORTSONLINE_PATH_PATTERNS = (
     re.compile(r"/hd/hd\d+\.php(?:$|[?#])", re.IGNORECASE),
 )
 
+# Domain-agnostic pattern for icelanders-style embed pages. The embed
+# domain rotates periodically (seen so far: icelanders.st -> hux-giants.shop
+# -> cdx-08192.website -> ...), so we match on the stable /embed/{slug}
+# path structure rather than any specific domain.
+_ICELANDERS_EMBED_PATTERN = re.compile(r"/embed/[a-zA-Z0-9\-]+", re.IGNORECASE)
+
 
 def _is_sportsonline_candidate(value: str) -> bool:
     raw_value = (value or "").strip().lower()
@@ -84,7 +90,6 @@ def _build_proxy_list(primary_proxy: str | None = None, extractor_name: str | No
     return proxies
 
 
-
 def _cache_key(name: str, bypass_warp: bool = False) -> str:
     """Extractor cache key reflecting routing state (warp/proxy bypass)."""
     base = f"{name}_direct" if bypass_warp else name
@@ -105,9 +110,10 @@ async def resolve_extractor(self, url: str, request_headers: dict, host: str = N
             # ✅ FIX: Calcola il proxy corretto in base a bypass_warp invece di usare GLOBAL_PROXIES indiscriminatamente
             proxy_lookup_target = url if host in ["doodstream", "dood", "d000d"] else host
             proxy = get_proxy_for_url(
-        proxy_lookup_target,
-        bypass_warp=bypass_warp,
-    )
+                proxy_lookup_target,
+                bypass_warp=bypass_warp,
+            )
+
             proxy_list = _build_proxy_list(proxy, host)
 
             if host == "vavoo":
@@ -137,6 +143,17 @@ async def resolve_extractor(self, url: str, request_headers: dict, host: str = N
                 if key not in self.extractors:
                     self.extractors[key] = ADSExtractor(
                         request_headers, proxies=proxy_list
+                    )
+                return self.extractors[key]
+            elif host == "icelanders":
+                key = _cache_key("icelanders", bypass_warp)
+                if IcelandersExtractor is None:
+                    raise RuntimeError("IcelandersExtractor module not available")
+                proxy = get_proxy_for_url(url, bypass_warp=bypass_warp)
+                proxy_list = _build_proxy_list(proxy, "icelanders")
+                if key not in self.extractors:
+                    self.extractors[key] = IcelandersExtractor(
+                        request_headers, proxies=proxy_list, bypass_warp=bypass_warp
                     )
                 return self.extractors[key]
             elif _is_sportsonline_candidate(host):
@@ -176,6 +193,7 @@ async def resolve_extractor(self, url: str, request_headers: dict, host: str = N
                         request_headers, proxies=proxy_list
                     )
                 return self.extractors[key]
+
             # --- New Extractors (host selection) ---
             elif host in ["doodstream", "dood", "d000d"]:
                 key = _cache_key("doodstream", bypass_warp)
@@ -550,6 +568,7 @@ async def resolve_extractor(self, url: str, request_headers: dict, host: str = N
                     request_headers, proxies=proxy_list
                 )
             return self.extractors[key]
+
         # --- New Extractors (URL auto-detection) ---
         elif any(
             d in url
@@ -801,6 +820,20 @@ async def resolve_extractor(self, url: str, request_headers: dict, host: str = N
                     request_headers, proxies=proxy_list, bypass_warp=bypass_warp
                 )
             return self.extractors[key]
+        elif _ICELANDERS_EMBED_PATTERN.search(url) is not None and IcelandersExtractor is not None:
+            # Domain-agnostic catch for icelanders-style embeds, since the
+            # mirror domain rotates (icelanders.st -> hux-giants.shop ->
+            # cdx-08192.website -> ...). Placed after other /embed/-using
+            # extractors (vixsrc, vixcloud, embedst) so their more specific
+            # domain checks take priority over this broad path match.
+            key = _cache_key("icelanders", bypass_warp)
+            proxy = get_proxy_for_url(url, bypass_warp=bypass_warp)
+            proxy_list = _build_proxy_list(proxy, "icelanders")
+            if key not in self.extractors:
+                self.extractors[key] = IcelandersExtractor(
+                    request_headers, proxies=proxy_list, bypass_warp=bypass_warp
+                )
+            return self.extractors[key]
         else:
             # ✅ MODIFICATO: Fallback al GenericHLSExtractor per qualsiasi altro URL.
             # Questo permette di gestire estensioni sconosciute o URL senza estensione.
@@ -812,5 +845,6 @@ async def resolve_extractor(self, url: str, request_headers: dict, host: str = N
             return self.extractors[key]
     except (NameError, TypeError) as e:
         raise ExtractorError(f"Extractor not available - module missing: {e}")
+
 
 __all__ = ["resolve_extractor", "ExtractorError"]
