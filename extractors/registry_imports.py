@@ -1,4 +1,5 @@
 import logging
+import re
 
 logger = logging.getLogger("extractors.registry")
 
@@ -272,11 +273,23 @@ except Exception as e:
     RaiPlayExtractor = None
 
 try:
-    from extractors.ads import ADSExtractor
+    from extractors.ads import (
+        ADSExtractor,
+        ADS_HOST_PATTERN,
+        ADS_FILM_PATTERN,
+        ADS_SERIES_PATTERN,
+        ads_configured_host,
+    )
     logger.info("✅ ADSExtractor module loaded.")
 except Exception as e:
     logger.warning("⚠️ ADSExtractor failed to load: %s", e)
     ADSExtractor = None
+    ADS_HOST_PATTERN = re.compile(r"(?!)")
+    ADS_FILM_PATTERN = re.compile(r"(?!)")
+    ADS_SERIES_PATTERN = re.compile(r"(?!)")
+
+    def ads_configured_host() -> str:
+        return ""
 
 try:
     from extractors.cinejoy import CinejoyExtractor
@@ -322,5 +335,9 @@ __all__ = [
     "WittyTVExtractor",
     "RaiPlayExtractor",
     "ADSExtractor",
+    "ADS_HOST_PATTERN",
+    "ADS_FILM_PATTERN",
+    "ADS_SERIES_PATTERN",
+    "ads_configured_host",
     "CinejoyExtractor",
 ]
